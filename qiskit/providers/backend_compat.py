@@ -15,6 +15,9 @@
 from __future__ import annotations
 
 from typing import List, Iterable, Any, Dict, Optional
+from collections import namedtuple
+
+from pydantic import create_model
 
 from qiskit.exceptions import QiskitError
 
@@ -23,7 +26,10 @@ from qiskit.providers.backend import QubitProperties
 from qiskit.utils.units import apply_prefix
 from qiskit.circuit.library.standard_gates import get_standard_gate_name_mapping
 from qiskit.circuit.measure import Measure
-from qiskit.providers.models.backendconfiguration import BackendConfiguration
+from qiskit.providers.models.backendconfiguration import (
+    BackendConfiguration,
+    PulseBackendConfiguration,
+)
 from qiskit.providers.models.backendproperties import BackendProperties
 from qiskit.providers.models.pulsedefaults import PulseDefaults
 from qiskit.providers.options import Options
@@ -58,6 +64,9 @@ def convert_to_target(
         InstructionProperties,
     )
 
+    # Create namespace of backend provided parametric pulse
+    parametric_pulses = create_parametric_pulses(configuration)
+
     # Standard gates library mapping, multicontrolled gates not included since they're
     # variable width
     name_mapping = get_standard_gate_name_mapping()
@@ -74,6 +83,7 @@ def convert_to_target(
             num_qubits=configuration.n_qubits,
             qubit_properties=qubit_properties,
             concurrent_measurements=getattr(configuration, "meas_map", None),
+            parametric_pulses=parametric_pulses,
         )
         # Parse instructions
         gates: Dict[str, Any] = {}
@@ -129,6 +139,7 @@ def convert_to_target(
         target = Target(
             num_qubits=configuration.n_qubits,
             concurrent_measurements=getattr(configuration, "meas_map", None),
+            parametric_pulses=parametric_pulses,
         )
         for gate in configuration.gates:
             name = gate.name
@@ -193,6 +204,66 @@ def convert_to_target(
             {(bit,): None for bit in range(target.num_qubits) if bit not in faulty_qubits},
         )
     return target
+
+
+def create_parametric_pulses(
+    configuration: PulseBackendConfiguration,
+):
+    from qiskit.pulse.types import TimeInt, Time
+    from qiskit.pulse.library import symbolic_pulses, GenericPulse
+
+    try:
+        parametric_pulses = configuration.parametric_pulses
+    except AttributeError:
+        return namedtuple("PulseNamespace", [])
+
+    if not parametric_pulses:
+        return namedtuple("PulseNamespace", [])
+
+    supported_classes = {}
+    for pulse_info in parametric_pulses:
+        if isinstance(pulse_info, str):
+            # Load pulse class from Qiskit builtin library
+            pulse_name = pulse_info
+            pulse_cls = getattr(symbolic_pulses, pulse_info, None)
+            if not pulse_cls:
+                continue
+        else:
+            # Dynamically create class
+            pulse_name = pulse_info["name"]
+            signature = {}
+            for name, config in pulse_info["parameters"].items():
+                if name in ("duration", "name"):
+                    # This is only common pulse parameter that Qiskit assumes.
+                    continue
+                try:
+                    dtype = config["type"]
+                except KeyError as ex:
+                    raise KeyError(
+                        f"Type information of {name} must be provided. "
+                        f"A parametric pulse class {pulse_name} cannot be created on Qiskit."
+                    ) from ex
+                match dtype:
+                    case "time_int":
+                        dtype_obj = TimeInt
+                    case "time":
+                        dtype_obj = Time
+                    case "number":
+                        dtype_obj = float
+                    case "integer":
+                        dtype_obj = int
+                    case _:
+                        raise ValueError(
+                            f"Parameter type {dtype} is not supported on Qiskit. "
+                            f"A parametric pulse class {pulse_name} cannot be created on Qiskit."
+                        )
+                default = config.get("default", ...)
+                signature[name] = (dtype_obj, default)
+            pulse_cls = create_model(pulse_name, **signature, __base__=GenericPulse)
+        supported_classes[pulse_name] = pulse_cls
+
+    pulse_namespace = namedtuple("PulseNamespace", supported_classes.keys())
+    return pulse_namespace(**supported_classes)
 
 
 def qubit_props_list_from_props(

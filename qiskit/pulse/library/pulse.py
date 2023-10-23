@@ -16,7 +16,10 @@ to the device.
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Any, Tuple, Union
 
+from pydantic import BaseModel
+
 from qiskit.circuit.parameterexpression import ParameterExpression
+from qiskit.pulse.types import TimeInt
 
 
 class Pulse(ABC):
@@ -135,3 +138,20 @@ class Pulse(ABC):
     @abstractmethod
     def __repr__(self) -> str:
         raise NotImplementedError
+
+
+class GenericPulse(BaseModel, ABC, extra="forbid"):
+    """A base class of generic pulse.
+
+    A generic pulse subclass is created on the fly from the signature information
+    that Qiskit backend may provide. Qiskit is agnostic to the actual envelope of the waveform
+    played on the controller apparatus. GenericPulse is only aware of its signature,
+    and the backend can add any parametric form without modifying the Qiskit codebase.
+
+    Note that GenericPulse cannot generate waveform samples on Qiskit domain.
+    """
+    duration: TimeInt
+    name: str = ""
+
+    def __str__(self):
+        return repr(self)

@@ -131,5 +131,5 @@ from .symbolic_pulses import (
     Sech,
     SechDeriv,
 )
-from .pulse import Pulse
+from .pulse import Pulse, GenericPulse
 from .waveform import Waveform

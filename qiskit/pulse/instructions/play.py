@@ -19,7 +19,7 @@ from qiskit.circuit.parameterexpression import ParameterExpression
 from qiskit.pulse.channels import PulseChannel
 from qiskit.pulse.exceptions import PulseError
 from qiskit.pulse.instructions.instruction import Instruction
-from qiskit.pulse.library.pulse import Pulse
+from qiskit.pulse.library.pulse import Pulse, GenericPulse
 
 
 class Play(Instruction):
@@ -51,8 +51,11 @@ class Play(Instruction):
             PulseError: If pulse is not a Pulse type.
             PulseError: If the input ``channel`` is not type :class:`PulseChannel`.
         """
-        if not isinstance(self.pulse, Pulse):
-            raise PulseError("The `pulse` argument to `Play` must be of type `library.Pulse`.")
+        if not isinstance(self.pulse, (Pulse, GenericPulse)):
+            raise PulseError(
+                "The `pulse` argument to `Play` must be of type "
+                "`library.Pulse` or `library.GenericPulse`"
+            )
 
         if not isinstance(self.channel, PulseChannel):
             raise PulseError(f"Expected a pulse channel, got {self.channel} instead.")

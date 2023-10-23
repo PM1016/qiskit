@@ -1820,7 +1820,7 @@ def play(
         channel: Channel to play pulse on.
         name: Name of the pulse.
     """
-    if not isinstance(pulse, library.Pulse):
+    if not isinstance(pulse, (library.Pulse, library.GenericPulse)):
         pulse = library.Waveform(pulse)
 
     append_instruction(instructions.Play(pulse, channel, name=name))

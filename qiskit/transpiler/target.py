@@ -240,6 +240,7 @@ class Target(Mapping):
         "qubit_properties",
         "_global_operations",
         "concurrent_measurements",
+        "parametric_pulses",
     )
 
     @deprecate_arg("aquire_alignment", new_alias="acquire_alignment", since="0.23.0")
@@ -254,6 +255,7 @@ class Target(Mapping):
         acquire_alignment=1,
         qubit_properties=None,
         concurrent_measurements=None,
+        parametric_pulses=None,
     ):
         """
         Create a new Target object
@@ -292,6 +294,9 @@ class Target(Mapping):
             concurrent_measurements(list): A list of sets of qubits that must be
                 measured together. This must be provided
                 as a nested list like [[0, 1], [2, 3, 4]].
+            parametric_pulses (Type): A list of parametric pulse classes that
+                this Target can provide.
+
             ValueError: If both ``num_qubits`` and ``qubit_properties`` are both
             defined and the value of ``num_qubits`` differs from the length of
             ``qubit_properties``.
@@ -327,6 +332,7 @@ class Target(Mapping):
                     )
         self.qubit_properties = qubit_properties
         self.concurrent_measurements = concurrent_measurements
+        self.parametric_pulses = parametric_pulses
 
     def add_instruction(self, instruction, properties=None, name=None):
         """Add a new instruction to the :class:`~qiskit.transpiler.Target`
