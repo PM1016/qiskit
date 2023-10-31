@@ -17,9 +17,9 @@ deprecations:
     * :func:`~qiskit.pulse.library.gaussian_square`
     * :func:`~qiskit.pulse.library.drag`
 
-    Instead, use the corresponding :class:`~qiskit.pulse.SymbolicPulse`, with :meth:`~.SymbolicPulse.get_waveform()`.
+    Instead, use the corresponding :class:`~qiskit.pulse.SymbolicPulse` with :meth:`~.SymbolicPulse.get_waveform()`.
     For example, instead of ``pulse.gaussian(100,0.5,10)`` use ``pulse.Gaussian(100,0.5,10).get_waveform()``.
 
-    Note that the phase of both ``Sawtooth`` and ``Square`` is defined such that a phase of :math:``2\\pi``
-    shifts by a full cycle, contrary to the discrete counterpart. Also note that complex amplitude support is
-    deprecated in the symbolic pulse library - use ``float`` ``amp`` and  ``angle`` instead.
+    Note that the phase of both :class:`~.Sawtooth` and :class:`~.Square` is defined such that a phase of
+    :math:`2\\pi` shifts by a full cycle, contrary to the discrete counterpart. Also note that complex
+    amplitude support is deprecated in the symbolic pulse library - use ``float``, ``amp`` and  ``angle`` instead.
