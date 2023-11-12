@@ -10,19 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"The Qiskit Terra setup file."
-
-import os
-import re
-from setuptools import setup, find_packages
 from setuptools_rust import Binding, RustExtension
 
-
-with open("requirements.txt") as f:
-    REQUIREMENTS = f.read().splitlines()
-
-# Read long description from README.
-README_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "README.md")
 with open(README_PATH) as readme_file:
     README = re.sub(
         "<!--- long-description-skip-begin -->.*<!--- long-description-skip-end -->",
